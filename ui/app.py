@@ -92,7 +92,7 @@ if analyze_btn:
     try:
         with st.spinner("🤖 Calculating AI Impact..."):
             response = requests.post(
-                "http://127.0.0.1:8000/analyze-career/",
+                "https://ai-career-risk-analyzer.onrender.com/",
                 json=payload
             )
 
