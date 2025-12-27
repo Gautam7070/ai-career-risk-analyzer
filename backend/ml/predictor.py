@@ -11,10 +11,7 @@ MODEL_DIR = BASE_DIR / "models"
 MODEL_PATH = MODEL_DIR / "automation_risk_model.pkl"
 
 # Hugging Face direct download URL
-MODEL_URL = (
-    "https://huggingface.co/gautam7070/automation-risk-model/resolve/main/automation_risk_model.pkl"
-    "resolve/main/automation_risk_model.pkl"
-)
+MODEL_URL = "https://huggingface.co/gautam7070/automation-risk-model/resolve/main/automation_risk_model.pkl"
 
 def download_model():
     MODEL_DIR.mkdir(exist_ok=True)
