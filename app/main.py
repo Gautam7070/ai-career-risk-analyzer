@@ -9,3 +9,16 @@ app = FastAPI(
 )
 
 app.include_router(career_router)
+
+
+@app.get("/")
+def root():
+    return {
+        "status": "ok",
+        "message": "AI Career Risk Analyzer API is running"
+    }
+
+
+@app.get("/healthz")
+def health():
+    return {"status": "healthy"}
