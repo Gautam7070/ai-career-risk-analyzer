@@ -159,4 +159,7 @@ if analyze_btn:
 
 else:
     st.info("👈 Enter details in the sidebar and click **Analyze Career Risk**.")
-    c1, c2, c3 =
+    c1, c2, c3 = st.columns(3)
+    c1.markdown("### 🔍 Smart Scoring\nML-based automation risk analysis")
+    c2.markdown("### 📊 Industry Context\nRisk benchmarking insights")
+    c3.markdown("### 🛡️ Future-Proofing\nActionable AI career advice")
