@@ -1,22 +1,51 @@
 import streamlit as st
 import requests
 import plotly.graph_objects as go
+import time
 
-# ===============================
-# CONFIG
-# ===============================
+# ======================================================
+# BACKEND CONFIG
+# ======================================================
 API_URL = "https://ai-career-risk-analyzer.onrender.com/analyze-career/"
-REQUEST_TIMEOUT = 60  # handles Render cold start
+HEALTH_URL = "https://ai-career-risk-analyzer.onrender.com/health"
 
+# ------------------------------------------------------
+# Wake backend silently (Render cold start fix)
+# ------------------------------------------------------
+try:
+    requests.get(HEALTH_URL, timeout=5)
+except:
+    pass
+
+
+def call_backend(payload):
+    """
+    Calls backend with retry logic to handle Render cold start.
+    Returns (result_json, backend_used: bool)
+    """
+    for _ in range(2):  # retry once
+        try:
+            response = requests.post(API_URL, json=payload, timeout=60)
+            if response.status_code == 200:
+                return response.json(), True
+        except Exception:
+            time.sleep(5)
+    return None, False
+
+
+# ======================================================
+# PAGE CONFIG
+# ======================================================
 st.set_page_config(
     page_title="AI Career Risk Intelligence",
     page_icon="🎯",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# ===============================
+# ======================================================
 # CUSTOM CSS
-# ===============================
+# ======================================================
 st.markdown("""
 <style>
 .main { background-color: #0e1117; }
@@ -28,27 +57,55 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ===============================
-# SIDEBAR
-# ===============================
+# ======================================================
+# SIDEBAR INPUTS
+# ======================================================
 with st.sidebar:
     st.title("🎯 Career Parameters")
+    st.markdown("Adjust details to analyze AI automation risk.")
 
     job_title = st.text_input("Job Title", "Software Engineer")
+
     industry = st.selectbox(
         "Industry",
-        ["IT", "Finance", "Healthcare", "Manufacturing", "Education", "Retail", "Entertainment", "Transportation"]
+        [
+            "IT", "Finance", "Healthcare", "Manufacturing",
+            "Education", "Retail", "Entertainment", "Transportation"
+        ]
     )
-    experience = st.slider("Experience (Years)", 0, 30, 5)
-    ai_impact = st.selectbox("AI Integration Level", ["Low", "Moderate", "High"])
-    projected_openings = st.number_input("Projected Openings (2030)", 0, 100000, 15000, step=1000)
-    remote_ratio = st.slider("Remote Work Ratio (%)", 0, 100, 75)
+
+    experience = st.slider(
+        "Experience (Years)",
+        min_value=0,
+        max_value=30,
+        value=5
+    )
+
+    ai_impact = st.selectbox(
+        "AI Integration Level",
+        ["Low", "Moderate", "High"]
+    )
+
+    projected_openings = st.number_input(
+        "Projected Openings (2030)",
+        min_value=0,
+        max_value=100000,
+        value=15000,
+        step=1000
+    )
+
+    remote_ratio = st.slider(
+        "Remote Work Ratio (%)",
+        min_value=0,
+        max_value=100,
+        value=75
+    )
 
     analyze_btn = st.button("🔥 Analyze Career Risk", use_container_width=True)
 
-# ===============================
-# MAIN
-# ===============================
+# ======================================================
+# MAIN CONTENT
+# ======================================================
 st.title("🎯 AI Career Risk & Job Market Intelligence")
 st.markdown("### Interactive Dashboard for Future-Proofing Your Career")
 
@@ -61,59 +118,61 @@ if analyze_btn:
         "remote_work_ratio_percent": remote_ratio
     }
 
-    result = None
-    backend_used = True
+    with st.spinner("🤖 Analyzing AI Impact..."):
+        result, backend_used = call_backend(payload)
 
-    try:
-        with st.spinner("🤖 Analyzing AI Impact..."):
-            response = requests.post(API_URL, json=payload, timeout=REQUEST_TIMEOUT)
-
-        if response.status_code == 200:
-            result = response.json()
-        else:
-            backend_used = False
-
-    except Exception:
-        backend_used = False
-
-    # ===============================
-    # FALLBACK (DEMO MODE)
-    # ===============================
+    # --------------------------------------------------
+    # FALLBACK (Demo Mode)
+    # --------------------------------------------------
     if not backend_used:
         result = {
             "automation_risk_percent": 48,
             "risk_category": "Medium"
         }
-        st.warning("⚠️ Backend unavailable (Render sleeping). Showing demo results.")
+        st.warning("⚠️ Backend cold-start detected. Showing demo results.")
 
     risk_score = result["automation_risk_percent"]
     risk_cat = result["risk_category"]
 
     col1, col2 = st.columns([1, 2])
 
-    # ===============================
-    # METRICS
-    # ===============================
+    # ==================================================
+    # METRICS + GAUGE
+    # ==================================================
     with col1:
         st.subheader("📊 Risk Score")
         st.metric("Automation Risk", f"{risk_score}%", risk_cat)
 
-        fig = go.Figure(go.Indicator(
+        fig_gauge = go.Figure(go.Indicator(
             mode="gauge+number",
             value=risk_score,
             title={"text": "Automation Risk Level"},
             gauge={
                 "axis": {"range": [0, 100]},
-                "bar": {"color": "#28a745" if risk_score < 30 else "#ffa500" if risk_score < 60 else "#ff4b4b"},
+                "bar": {
+                    "color": "#28a745" if risk_score < 30
+                    else "#ffa500" if risk_score < 60
+                    else "#ff4b4b"
+                },
+                "steps": [
+                    {"range": [0, 30], "color": "rgba(40,167,69,0.3)"},
+                    {"range": [30, 60], "color": "rgba(255,165,0,0.3)"},
+                    {"range": [60, 100], "color": "rgba(255,75,75,0.3)"}
+                ]
             }
         ))
-        fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", font={"color": "white"})
-        st.plotly_chart(fig, use_container_width=True)
+        fig_gauge.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            font={"color": "white"}
+        )
+        st.plotly_chart(fig_gauge, use_container_width=True)
 
-    # ===============================
-    # BENCHMARK
-    # ===============================
+    # ==================================================
+    # INDUSTRY BENCHMARK
+    # ==================================================
     with col2:
+        st.subheader("📈 Industry Benchmark")
+
         industry_avg = {
             "IT": 45, "Finance": 55, "Healthcare": 25,
             "Manufacturing": 75, "Education": 35,
@@ -122,7 +181,11 @@ if analyze_btn:
         }.get(industry, 50)
 
         fig_bar = go.Figure()
-        fig_bar.add_bar(x=["Your Role", f"{industry} Avg"], y=[risk_score, industry_avg])
+        fig_bar.add_bar(
+            x=["Your Role", f"{industry} Avg"],
+            y=[risk_score, industry_avg],
+            marker_color=["#ff4b4b", "#1f77b4"]
+        )
         fig_bar.update_layout(
             yaxis_title="Automation Risk (%)",
             paper_bgcolor="rgba(0,0,0,0)",
@@ -131,14 +194,21 @@ if analyze_btn:
         )
         st.plotly_chart(fig_bar, use_container_width=True)
 
-    # ===============================
-    # ADVICE
-    # ===============================
+    # ==================================================
+    # AI ADVICE
+    # ==================================================
     st.divider()
-    advice_style = "low-risk" if risk_cat == "Low" else "medium-risk" if risk_cat == "Medium" else "high-risk"
+    st.subheader("💡 AI-Proofing Strategy")
+
+    advice_style = (
+        "low-risk" if risk_cat == "Low"
+        else "medium-risk" if risk_cat == "Medium"
+        else "high-risk"
+    )
+
     advice_text = {
         "Low": "Your role is resilient. Focus on deep expertise and AI-assisted productivity.",
-        "Medium": "Upskill in Human-AI collaboration, leadership, and specialization.",
+        "Medium": "Upskill in Human-AI collaboration, leadership, and domain specialization.",
         "High": "Consider reskilling into strategic, creative, or AI-oversight roles."
     }
 
@@ -151,3 +221,7 @@ if analyze_btn:
 
 else:
     st.info("👈 Enter details in the sidebar and click **Analyze Career Risk**.")
+    c1, c2, c3 = st.columns(3)
+    c1.markdown("### 🔍 Accurate Prediction\nML-based automation risk scoring.")
+    c2.markdown("### 📊 Benchmarking\nCompare with industry averages.")
+    c3.markdown("### 🛡️ Future-Proofing\nActionable AI career advice.")
