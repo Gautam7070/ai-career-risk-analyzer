@@ -119,4 +119,35 @@ if analyze_btn:
             "Manufacturing": 75, "Education": 35,
             "Retail": 80, "Entertainment": 50,
             "Transportation": 85
-        }.get(indu
+        }.get(industry, 50)
+
+        fig_bar = go.Figure()
+        fig_bar.add_bar(x=["Your Role", f"{industry} Avg"], y=[risk_score, industry_avg])
+        fig_bar.update_layout(
+            yaxis_title="Automation Risk (%)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font={"color": "white"}
+        )
+        st.plotly_chart(fig_bar, use_container_width=True)
+
+    # ===============================
+    # ADVICE
+    # ===============================
+    st.divider()
+    advice_style = "low-risk" if risk_cat == "Low" else "medium-risk" if risk_cat == "Medium" else "high-risk"
+    advice_text = {
+        "Low": "Your role is resilient. Focus on deep expertise and AI-assisted productivity.",
+        "Medium": "Upskill in Human-AI collaboration, leadership, and specialization.",
+        "High": "Consider reskilling into strategic, creative, or AI-oversight roles."
+    }
+
+    st.markdown(f"""
+    <div class="advice-card {advice_style}">
+        <h4>Recommendation for {job_title}</h4>
+        <p>{advice_text[risk_cat]}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+else:
+    st.info("👈 Enter details in the sidebar and click **Analyze Career Risk**.")
