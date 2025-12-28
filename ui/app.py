@@ -7,17 +7,15 @@ import time
 # BACKEND CONFIG
 # ======================================================
 API_URL = "https://ai-career-risk-analyzer.onrender.com/analyze-career/"
-HEALTH_URL = "https://ai-career-risk-analyzer.onrender.com/healthz"
+HEALTH_URL = "https://ai-career-risk-analyzer.onrender.com/health"
 
 # ------------------------------------------------------
 # Wake backend silently (Render cold start fix)
 # ------------------------------------------------------
-if "backend_warm" not in st.session_state:
-    try:
-        requests.get(HEALTH_URL, timeout=5)
-        st.session_state.backend_warm = True
-    except:
-        pass
+try:
+    requests.get(HEALTH_URL, timeout=5)
+except:
+    pass
 
 
 def call_backend(payload):
@@ -25,13 +23,13 @@ def call_backend(payload):
     Calls backend with retry logic to handle Render cold start.
     Returns (result_json, backend_used: bool)
     """
-    for attempt in range(3):  # Increased retries
+    for _ in range(2):  # retry once
         try:
-            response = requests.post(API_URL, json=payload, timeout=45)
+            response = requests.post(API_URL, json=payload, timeout=60)
             if response.status_code == 200:
                 return response.json(), True
-        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
-            time.sleep(10)  # Wait longer for cold start
+        except Exception:
+            time.sleep(5)
     return None, False
 
 
@@ -103,7 +101,7 @@ with st.sidebar:
         value=75
     )
 
-    analyze_btn = st.button("🔥 Analyze Career Risk", use_container_width=True)
+    analyze_btn = st.button("🔥 Analyze Career Risk", width="stretch")
 
 # ======================================================
 # MAIN CONTENT
@@ -167,7 +165,7 @@ if analyze_btn:
             paper_bgcolor="rgba(0,0,0,0)",
             font={"color": "white"}
         )
-        st.plotly_chart(fig_gauge, use_container_width=True)
+        st.plotly_chart(fig_gauge, width="stretch")
 
     # ==================================================
     # INDUSTRY BENCHMARK
@@ -194,7 +192,7 @@ if analyze_btn:
             plot_bgcolor="rgba(0,0,0,0)",
             font={"color": "white"}
         )
-        st.plotly_chart(fig_bar, use_container_width=True)
+        st.plotly_chart(fig_bar, width="stretch")
 
     # ==================================================
     # AI ADVICE
