@@ -1,11 +1,12 @@
 import streamlit as st
 import requests
 import plotly.graph_objects as go
-import time
 
+# ======================================================
+# CONFIG
+# ======================================================
 API_BASE = "https://ai-career-risk-analyzer.onrender.com"
 
-# ---------------- PAGE CONFIG ----------------
 st.set_page_config(
     page_title="AI Career Risk Intelligence",
     page_icon="🎯",
@@ -13,7 +14,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ---------------- CSS ----------------
+# ======================================================
+# CSS
+# ======================================================
 st.markdown("""
 <style>
 .advice-card {
@@ -28,34 +31,50 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- SIDEBAR ----------------
+# ======================================================
+# SIDEBAR
+# ======================================================
 with st.sidebar:
     st.title("🎯 Career Parameters")
 
     job_title = st.text_input("Job Title", "Software Engineer")
     experience = st.slider("Experience (Years)", 0, 30, 5)
     ai_impact = st.selectbox("AI Integration Level", ["Low", "Moderate", "High"])
-    projected_openings = st.number_input("Projected Openings (2030)", 0, 100000, 15000, step=1000)
+    projected_openings = st.number_input(
+        "Projected Openings (2030)",
+        min_value=0,
+        max_value=100000,
+        value=15000,
+        step=1000
+    )
     remote_ratio = st.slider("Remote Work Ratio (%)", 0, 100, 75)
 
     analyze_btn = st.button("🔥 Analyze Career Risk", width="stretch")
 
-# ---------------- HELPERS ----------------
-def backend_alive():
+# ======================================================
+# HELPERS
+# ======================================================
+def backend_health_check() -> bool:
+    """Check if backend is awake without loading model."""
     try:
         r = requests.get(f"{API_BASE}/health", timeout=5)
         return r.status_code == 200
-    except:
+    except Exception:
         return False
 
+
 def demo_result():
+    """Fallback demo result during cold start."""
     return {
         "automation_risk_percent": 42,
         "risk_category": "Medium"
     }
 
-# ---------------- MAIN ----------------
+# ======================================================
+# MAIN UI
+# ======================================================
 st.title("🎯 AI Career Risk & Job Market Intelligence")
+st.markdown("### Future-proof your career against AI automation")
 
 if analyze_btn:
     payload = {
@@ -66,8 +85,8 @@ if analyze_btn:
         "remote_work_ratio_percent": remote_ratio
     }
 
-    with st.spinner("🤖 Checking backend availability..."):
-        if not backend_alive():
+    with st.spinner("🤖 Checking backend status..."):
+        if not backend_health_check():
             st.warning("⚠️ Backend cold-start detected. Showing demo results.")
             result = demo_result()
         else:
@@ -79,7 +98,7 @@ if analyze_btn:
                 )
                 response.raise_for_status()
                 result = response.json()
-            except:
+            except Exception:
                 st.warning("⚠️ Backend waking up. Showing demo results.")
                 result = demo_result()
 
@@ -88,7 +107,9 @@ if analyze_btn:
 
     col1, col2 = st.columns([1, 2])
 
-    # ---------- GAUGE ----------
+    # ==================================================
+    # GAUGE
+    # ==================================================
     with col1:
         fig = go.Figure(go.Indicator(
             mode="gauge+number",
@@ -96,27 +117,46 @@ if analyze_btn:
             title={"text": "Automation Risk (%)"},
             gauge={
                 "axis": {"range": [0, 100]},
-                "bar": {"color": "#28a745" if risk_score < 30 else "#ffa500" if risk_score < 60 else "#ff4b4b"},
+                "bar": {
+                    "color": "#28a745"
+                    if risk_score < 30
+                    else "#ffa500"
+                    if risk_score < 60
+                    else "#ff4b4b"
+                }
             }
         ))
-        fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", font={"color": "white"})
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            font={"color": "white"}
+        )
         st.plotly_chart(fig, width="stretch")
 
-    # ---------- ADVICE ----------
+    # ==================================================
+    # ADVICE
+    # ==================================================
     with col2:
-        style = "low-risk" if risk_cat == "Low" else "medium-risk" if risk_cat == "Medium" else "high-risk"
+        style = (
+            "low-risk"
+            if risk_cat == "Low"
+            else "medium-risk"
+            if risk_cat == "Medium"
+            else "high-risk"
+        )
+
         advice = {
-            "Low": "Your role is resilient. Focus on AI-assisted productivity.",
-            "Medium": "Upskill in human-AI collaboration and domain expertise.",
-            "High": "Consider reskilling into strategic or creative roles."
+            "Low": "Your role is resilient. Focus on deep expertise and AI-assisted productivity.",
+            "Medium": "Upskill in human-AI collaboration, leadership, and domain specialization.",
+            "High": "Consider reskilling into strategic, creative, or AI-oversight roles."
         }
 
         st.markdown(f"""
         <div class="advice-card {style}">
-            <h4>Recommendation</h4>
+            <h4>Recommendation for {job_title}</h4>
             <p>{advice[risk_cat]}</p>
         </div>
         """, unsafe_allow_html=True)
 
 else:
-    st.info("👈 Enter details and click **Analyze Career Risk**.")
+    st.info("👈 Enter details in the sidebar and click **Analyze Career Risk**.")
+    c1, c2, c3 =
