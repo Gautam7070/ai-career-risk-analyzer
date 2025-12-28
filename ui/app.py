@@ -7,15 +7,17 @@ import time
 # BACKEND CONFIG
 # ======================================================
 API_URL = "https://ai-career-risk-analyzer.onrender.com/analyze-career/"
-HEALTH_URL = "https://ai-career-risk-analyzer.onrender.com/health"
+HEALTH_URL = "https://ai-career-risk-analyzer.onrender.com/healthz"
 
 # ------------------------------------------------------
 # Wake backend silently (Render cold start fix)
 # ------------------------------------------------------
-try:
-    requests.get(HEALTH_URL, timeout=5)
-except:
-    pass
+if "backend_warm" not in st.session_state:
+    try:
+        requests.get(HEALTH_URL, timeout=5)
+        st.session_state.backend_warm = True
+    except:
+        pass
 
 
 def call_backend(payload):
@@ -23,13 +25,13 @@ def call_backend(payload):
     Calls backend with retry logic to handle Render cold start.
     Returns (result_json, backend_used: bool)
     """
-    for _ in range(2):  # retry once
+    for attempt in range(3):  # Increased retries
         try:
-            response = requests.post(API_URL, json=payload, timeout=60)
+            response = requests.post(API_URL, json=payload, timeout=45)
             if response.status_code == 200:
                 return response.json(), True
-        except Exception:
-            time.sleep(5)
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+            time.sleep(10)  # Wait longer for cold start
     return None, False
 
 
