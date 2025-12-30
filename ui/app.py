@@ -86,41 +86,41 @@ if analyze_btn:
     }
 
     with st.spinner("🤖 Checking backend status..."):
-    if not backend_health_check():
-        st.warning("⚠️ Backend cold-start detected. Showing demo results.")
-        result = demo_result()
-        st.write("Demo Result:")
-        st.json(result)
-
-    else:
-        try:
-            response = requests.post(
-                f"{API_BASE}/analyze-career/",
-                json=payload,
-                timeout=30
-            )
-
-            # 🔍 SHOW RAW RESPONSE INFO
-            st.write("🔍 Response status code:", response.status_code)
-            st.write("🔍 Response headers:", response.headers)
-
-            response.raise_for_status()
-
-            result = response.json()
-
-            # 🔍 SHOW ACTUAL BACKEND RESULT
-            st.success("✅ Backend response received")
-            st.write("📦 Backend Result:")
-            st.json(result)
-
-        except Exception as e:
-            st.error("❌ Exception occurred while calling backend")
-            st.exception(e)
-
-            st.warning("⚠️ Backend waking up. Showing demo results.")
+        if not backend_health_check():
+            st.warning("⚠️ Backend cold-start detected. Showing demo results.")
             result = demo_result()
             st.write("Demo Result:")
             st.json(result)
+
+        else:
+            try:
+                response = requests.post(
+                    f"{API_BASE}/analyze-career/",
+                    json=payload,
+                    timeout=30
+                )
+
+                # 🔍 SHOW RAW RESPONSE INFO
+                st.write("🔍 Response status code:", response.status_code)
+                st.write("🔍 Response headers:", response.headers)
+
+                response.raise_for_status()
+
+                result = response.json()
+
+                # 🔍 SHOW ACTUAL BACKEND RESULT
+                st.success("✅ Backend response received")
+                st.write("📦 Backend Result:")
+                st.json(result)
+
+            except Exception as e:
+                st.error("❌ Exception occurred while calling backend")
+                st.exception(e)
+
+                st.warning("⚠️ Backend waking up. Showing demo results.")
+                result = demo_result()
+                st.write("Demo Result:")
+                st.json(result)
 
 
     # with st.spinner("🤖 Checking backend status..."):
