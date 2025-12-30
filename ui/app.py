@@ -106,7 +106,7 @@ if analyze_btn:
                 st.write("🔍 Response status code:", response.status_code)
                 st.write("🔍 Response headers:", response.headers)
 
-                response.raise_for_status()
+                # response.raise_for_status()
 
                 result = response.json()
 
