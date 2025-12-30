@@ -1,6 +1,7 @@
 from pathlib import Path
 import joblib
 import requests
+import pandas as pd
 from functools import lru_cache
 
 # Base directory of the project
@@ -28,11 +29,23 @@ def download_model():
 
         print("✅ Model downloaded successfully")
 
+ai_impact_mapping = {"Low": 1, "Moderate": 2, "High": 3}
+
 @lru_cache(maxsize=1)
 def get_model():
     download_model()
     return joblib.load(MODEL_PATH)
 
-def predict_risk(features):
+def predict_risk(data: dict) -> float:
     model = get_model()
-    return model.predict(features)
+    
+    # Convert input to DataFrame as expected by the model
+    df = pd.DataFrame([{
+        "experience_required_years": data["experience_required_years"],
+        "ai_impact_level": ai_impact_mapping.get(data["ai_impact_level"], 1),
+        "projected_openings_2030": data["projected_openings_2030"],
+        "remote_work_ratio_percent": data["remote_work_ratio_percent"]
+    }])
+    
+    prediction = model.predict(df)[0]
+    return float(prediction)

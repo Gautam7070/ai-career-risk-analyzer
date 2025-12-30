@@ -5,6 +5,8 @@ import plotly.graph_objects as go
 # ======================================================
 # CONFIG
 # ======================================================
+# API_BASE = "http://127.0.0.1:8000"
+
 API_BASE = "https://ai-career-risk-analyzer.onrender.com"
 
 st.set_page_config(
