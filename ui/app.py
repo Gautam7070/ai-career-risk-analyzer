@@ -97,7 +97,9 @@ if analyze_btn:
                     timeout=30
                 )
                 response.raise_for_status()
+                print(response)
                 result = response.json()
+                print(result)
             except Exception:
                 st.warning("⚠️ Backend waking up. Showing demo results.")
                 result = demo_result()
